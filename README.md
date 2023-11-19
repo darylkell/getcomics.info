@@ -28,7 +28,7 @@ python main.py "Stalking Dead Deluxe"
 ```
 
 ```
-# Download issues 73 and newer of 'Walking Dead Deluxe'
+# Download issues 73 and newer of 'Stalking Dead Deluxe'
 python main.py "Stalking Dead Deluxe" -newer 73
 ```
 
