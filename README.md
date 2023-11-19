@@ -1,5 +1,5 @@
 # getcomics.info
-Download files from getcomics.info, should play nicely on Linux and Windows.
+Sequentially download files from getcomics.info, should play nicely on Linux and Windows.
 
 ```
 usage: main.py [-h] [-output DOWNLOAD_PATH] [-newer NEWER] [-results RESULTS] [-test] [-verbose] query
