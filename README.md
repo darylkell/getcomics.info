@@ -14,9 +14,9 @@ options:
   -output DOWNLOAD_PATH, --o DOWNLOAD_PATH
                         Destination directory (default: "./")
   -newer NEWER, --n NEWER
-                        Search for issues including newer ones, requires an integer in the search (default: False)
+                        Search for issues including newer ones, requires an integer argument (default: False)
   -results RESULTS, --r RESULTS
-                        Number of results to retrieve (default: 1, 0 for infinite)
+                        Number of results to retrieve, requires an integer argument (default: 1, 0 for infinite)
   -test, --t            Enable test mode (default: False)
   -verbose, --v         Verbosity level (default: False)
 ```
@@ -55,3 +55,10 @@ Comic links found:
 Notes:
 - Where a 'native' download cannot be found, but a Mediarefire download is available, the Mediafire link will be shown, the URL prepended by '_MEDIAFIRE_'
 - Script relies on a 'Download Now' button or 'Main Server' button(s) to find a download link.
+- As the query is made via a Python object, query.Query could be imported and searches could be written out to file etc.
+<br>
+Requirements:
+This script has been tested with the following requirements:
+- rich                 13.3.4
+- beautifulsoup4       4.12.2
+- requests             2.28.2 
