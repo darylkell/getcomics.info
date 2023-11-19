@@ -20,6 +20,7 @@ options:
   -test, --t            Enable test mode (default: False)
   -verbose, --v         Verbosity level (default: False)
 ```
+
 Examples:
 ```
 # Download all 'Walking Dead Deluxe' comics to be found
@@ -38,7 +39,7 @@ python main.py "Walking Dead Deluxe" -results 10
 
 ```
 # Do a test run at downloading a maximum of 3 search results for 'Walking Dead Deluxe' - essentially runs the search without downloading
-python main.py "Walking Dead Deluxe" -results 3 -test                                                              ─╯
+python main.py "Walking Dead Deluxe" -results 3 -test                                                              
 
 Page links found:
 1) The Walking Dead Deluxe #77 (2023): https://getcomics.org/other-comics/the-walking-dead-deluxe-77-2023/
@@ -52,5 +53,5 @@ Comic links found:
 ```
 
 Notes:
-. Where a 'native' download cannot be found, but a Mediarefire download is available, the Mediafire link will be shown, the URL prepended by '_MEDIAFIRE_'
-. Script relies on a 'Download Now' button or 'Main Server' button(s) to find a download link.
+- Where a 'native' download cannot be found, but a Mediarefire download is available, the Mediafire link will be shown, the URL prepended by '_MEDIAFIRE_'
+- Script relies on a 'Download Now' button or 'Main Server' button(s) to find a download link.
