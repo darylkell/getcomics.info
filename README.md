@@ -54,9 +54,9 @@ Comic links found:
 
 Notes:
 
-* Where a 'native' download cannot be found, but a Mediarefire download is available, the Mediafire link will be shown, the URL prepended by '_MEDIAFIRE_'
+* Where a 'native' download cannot be found, but a Mediarefire download is available, the Mediafire link will be shown, the URL prepended by '_MEDIAFIRE_' (will require a manual download)
 * Script relies on a 'Download Now' button or 'Main Server' button(s) to find a download link.
-* As the query is made via a Python object, query.Query could be imported and searches could be written out to file etc.
+* As the query is made via a Python object, query.Query could be imported to a bespoke script and searches could be written out to file etc.
 <br>
 Requirements:
 
