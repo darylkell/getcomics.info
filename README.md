@@ -38,7 +38,7 @@ python main.py "Walking Dead Deluxe" -results 10
 ```
 
 ```
-# Do a test run at downloading a maximum of 3 search results for 'Walking Dead Deluxe' - essentially runs the search without downloading
+# Do a test run at a maximum of 3 search results for 'Walking Dead Deluxe' - essentially runs the search without downloading
 python main.py "Walking Dead Deluxe" -results 3 -test                                                              
 
 Page links found:
@@ -53,12 +53,15 @@ Comic links found:
 ```
 
 Notes:
-- Where a 'native' download cannot be found, but a Mediarefire download is available, the Mediafire link will be shown, the URL prepended by '_MEDIAFIRE_'
-- Script relies on a 'Download Now' button or 'Main Server' button(s) to find a download link.
-- As the query is made via a Python object, query.Query could be imported and searches could be written out to file etc.
+
+* Where a 'native' download cannot be found, but a Mediarefire download is available, the Mediafire link will be shown, the URL prepended by '_MEDIAFIRE_'
+* Script relies on a 'Download Now' button or 'Main Server' button(s) to find a download link.
+* As the query is made via a Python object, query.Query could be imported and searches could be written out to file etc.
 <br>
 Requirements:
+
 This script has been tested with the following requirements:
-- rich                 13.3.4
-- beautifulsoup4       4.12.2
-- requests             2.28.2 
+
+* rich                 13.3.4
+* beautifulsoup4       4.12.2
+* requests             2.28.2 
