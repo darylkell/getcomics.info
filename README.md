@@ -22,13 +22,18 @@ options:
 ```
 Examples:
 ```
+# Download all 'Walking Dead Deluxe' comics to be found
+python main.py "Walking Dead Deluxe"
+```
+
+```
 # Download issues 73 and newer of 'Walking Dead Deluxe'
 python main.py "Walking Dead Deluxe" -newer 73
 ```
 
 ```
 # Download a maximum of 10 'The Walking Dead Deluxe' search results
-python main.py "Walking Dead Deluxe" -results 5
+python main.py "Walking Dead Deluxe" -results 10
 ```
 
 ```
