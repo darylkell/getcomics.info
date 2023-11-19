@@ -1,12 +1,4 @@
-'''
-	Inspired by:
-	Taylor King
-	telltaylor13@gmail.com
-	https://github.com/Gink3/ComicScraper
-'''
-
 import argparse
-import re
 import sys
 
 from pathlib import Path

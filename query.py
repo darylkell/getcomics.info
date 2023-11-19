@@ -1,5 +1,6 @@
 import math
 import tempfile
+
 from pathlib import Path
 from urllib.parse import quote_plus, unquote
 
@@ -104,6 +105,7 @@ class Query:
                 verbose=True, 
                 transient=True
             )
+            print(f"'{title}' downloaded.")
 
     def download_file(self, url, filename=None, chunk_size=1024, verbose=False, transient=False):
         """
