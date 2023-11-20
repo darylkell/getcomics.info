@@ -26,6 +26,11 @@ def parse_arguments():
 		help='Search for issues including newer ones, requires an integer in the search (default: False)'
 	)
 
+	# Optional argument for prompting before saving
+	parser.add_argument('-prompt', '--p', dest="prompt", action='store_true', default=False,
+		help='Confirm download before saving (default: False)'
+	)
+	
 	# Optional argument for the number of results
 	parser.add_argument('-results', '--r', dest="results", type=int, default=0, # treat 0 as infinite
 		help='Number of results to retrieve (default: 1, 0 for infinite)'
@@ -80,7 +85,7 @@ def main():
 				for index, (url, title) in enumerate(query.comic_links.items(), start=1):
 					print(f"{index}) {title}:\n{url}")
 			else:
-				query.download_comics()
+				query.download_comics(args.prompt)
 
 			if args.newer:
 				# break if it is 3 times in a row that we've failed to find comics

@@ -90,7 +90,7 @@ class Query:
 				for tag in main_server_a_tags:
 					self.comic_links[tag["href"]] = title
 
-	def download_comics(self):
+	def download_comics(self, prompt=False):
 		"""
 		Downloads comics that have been found 
 		"""        
@@ -103,6 +103,9 @@ class Query:
 			file_name = self.safe_filename(unquote(url.rpartition("/")[-1]))
 			file_name = self.create_file_name(str(Path(self.download_path / file_name)))
 			
+			if prompt and "n" in input(f"Download '{title}'? (Y/n) ").lower():
+				continue
+
 			self.download_file(
 				url, 
 				filename=Path(file_name),
@@ -153,7 +156,6 @@ class Query:
 
 					file.write(chunk)
 					progress.update(task_id, description=file_name_divided, advance=chunk_size)
-					# progress.advance(task_id, advance=chunk_size)
 		temp_file.replace(destination)
 
 	def safe_filename(self, filename: str) -> str:
