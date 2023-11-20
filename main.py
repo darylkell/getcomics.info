@@ -1,7 +1,10 @@
 import argparse
 import sys
-
 from pathlib import Path
+from itertools import zip_longest
+
+from rich.console import Console
+from rich.markdown import Markdown
 
 from query import Query
 
@@ -57,8 +60,11 @@ def parse_arguments():
 	return args
 
 
+
+
 def main():
 	args = parse_arguments()
+	console = Console()
 
 	try:
 		i = -1
@@ -74,16 +80,12 @@ def main():
 			query.get_download_links()
 
 			if args.test:
-				print(f"\n{'-'*40}\nQuery: {args.query} {args.newer + i if args.newer else ''}")
-				print("Page links found:")
-				if len(query.page_links) == 0: print(0)
-				for index, (url, title) in enumerate(query.page_links.items(), start=1):
-					print(f"{index}) {title}: {url}")
-			
-				print("Comic links found:")
-				if len(query.page_links) == 0: print(0)
-				for index, (url, title) in enumerate(query.comic_links.items(), start=1):
-					print(f"{index}) {title}:\n{url}")
+				console.print(Markdown(f"## {args.query} {args.newer + i if args.newer else ''}"))
+				for page_index, (page_url, page_title) in enumerate(query.page_links.items(), start=1):
+					print(f"\n{page_index}) {page_title}\nPage: {page_url}\nComic links on page:")
+					for comic_index, (comic_url, comic_title) in enumerate(query.comic_links.items(), start=1):
+						if comic_title == page_title:
+							print(f"  • {comic_url}")
 			else:
 				query.download_comics(args.prompt)
 
@@ -103,3 +105,7 @@ def main():
 
 if __name__ == "__main__":
 	main()
+
+
+
+
