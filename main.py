@@ -11,7 +11,7 @@ def parse_arguments():
 	Parse arguments, but exit early if an output directory doesn't resolve properly.
 	"""
 
-	parser = argparse.ArgumentParser(description='Get comics from a search term.')
+	parser = argparse.ArgumentParser(description='Search for and/or download content from getcomics.info')
 	
 	# Mandatory argument
 	parser.add_argument('query', type=str, help='Search term for comics')
