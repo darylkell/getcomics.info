@@ -57,6 +57,7 @@ def main():
 
 	try:
 		i = -1
+		failed_to_find_comics = 0
 		while True: # loop used to continue searching for issues until one cannot be found, if args.newer set
 			if args.newer:
 				i += 1
@@ -68,18 +69,27 @@ def main():
 			query.get_download_links()
 
 			if args.test:
-				print("\nPage links found:")
-				for i, (url, title) in enumerate(query.page_links.items(), start=1):
-					print(f"{i}) {title}: {url}")
+				print(f"\n{'-'*40}\nQuery: {args.query} {args.newer + i}")
+				print("Page links found:")
+				if len(query.page_links) == 0: print(0)
+				for index, (url, title) in enumerate(query.page_links.items(), start=1):
+					print(f"{index}) {title}: {url}")
 			
-				print("\nComic links found:")	
-				for i, (url, title) in enumerate(query.comic_links.items(), start=1):
-					print(f"{i}) {title}: {url}")
+				print("Comic links found:")
+				if len(query.page_links) == 0: print(0)
+				for index, (url, title) in enumerate(query.comic_links.items(), start=1):
+					print(f"{index}) {title}: {url}")
 			else:
 				query.download_comics()
 
-			if not query.comic_links or not args.newer:
-				break
+			if args.newer:
+				# break if it is 3 times in a row that we've failed to find comics
+				if not query.comic_links:
+					failed_to_find_comics += 1
+					if failed_to_find_comics == 3:
+						break
+				else:
+					failed_to_find_comics = 0
 	except KeyboardInterrupt:
 		sys.exit(1)
 
