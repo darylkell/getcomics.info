@@ -17,7 +17,7 @@ options:
                         Search for issues including newer ones, requires an integer in the search (default: False)
   -prompt, --p          Confirm download before saving (default: False)
   -results RESULTS, --r RESULTS
-                        Number of results to retrieve (default: 1, 0 for infinite)
+                        Number of results to retrieve (default: 0, for infinite)
   -test, --t            Enable test mode (default: False)
   -verbose, --v         Verbosity level (default: False)
 ```
