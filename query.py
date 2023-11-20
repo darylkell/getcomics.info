@@ -7,7 +7,8 @@ from urllib.parse import quote_plus, unquote
 
 import requests
 from bs4 import BeautifulSoup
-from rich.progress import track
+from rich.progress import Progress, BarColumn, DownloadColumn, TextColumn, TimeRemainingColumn, TransferSpeedColumn
+
 
 BASE_URL = "https://getcomics.info"
 
@@ -103,7 +104,7 @@ class Query:
 			
 			self.download_file(
 				url, 
-				filename=file_name,
+				filename=Path(file_name),
 				verbose=True, 
 				transient=True
 			)
@@ -112,28 +113,39 @@ class Query:
 	def download_file(self, url, filename=None, chunk_size=1024, verbose=False, transient=False):
 		"""
 		url (str): url to download
-		filename (str): path to save as
+		filename (Path): path to save as
 		verbose (bool): whether or not to display the progress bar
 		transient: make the progress bar disappear on completion
 		
 		Downloads file to OS temp directory, then renames to the final given destination
 		"""
 		destination = filename
-		
-		filename = url.rpartition("/")[-1] if filename is None else filename
-		temp_file = Path(tempfile.gettempdir()) / filename
-				
+		temp_file = Path(tempfile.gettempdir()) / filename.name
+
 		response = requests.get(url, stream=True)
+		total_size_in_bytes = int(response.headers.get('content-length', 0))
 		with open(temp_file, "wb") as file:
-			total_size_in_bytes = int(response.headers.get('content-length', 0))
-			for chunk in track(
-				response.iter_content(chunk_size=chunk_size), 
-				description=f"Downloading '{filename}' ({self.format_bytes(total_size_in_bytes) if total_size_in_bytes else 'Unknown size'})", 
-				transient=transient,
-				total=math.ceil(total_size_in_bytes / 1024),
-				disable=not verbose
-			):
-				file.write(chunk)
+			progress = Progress(
+				TextColumn(destination.name),
+				TimeRemainingColumn(compact=True),
+				BarColumn(bar_width=20),
+				"[progress.percentage]{task.percentage:>3.1f}%",
+				"•",
+				DownloadColumn(binary_units=True),
+				"•",
+				TransferSpeedColumn(),
+				disable=not verbose,
+				transient=transient
+			)
+			with progress:
+				task_id = progress.add_task(
+					description=destination.name,
+					total=total_size_in_bytes,
+					visible=not self.verbose
+				)
+				for chunk in response.iter_content(chunk_size=chunk_size):
+					file.write(chunk)
+					progress.advance(task_id, advance=chunk_size)
 		temp_file.replace(destination)
 
 	def safe_filename(self, filename: str) -> str:
