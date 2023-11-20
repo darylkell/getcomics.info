@@ -2,9 +2,9 @@
 Sequentially download files from getcomics.info, should play nicely on Linux and Windows.
 
 ```
-usage: main.py [-h] [-output DOWNLOAD_PATH] [-newer NEWER] [-results RESULTS] [-test] [-verbose] query
+usage: main.py [-h] [-output DOWNLOAD_PATH] [-newer NEWER] [-prompt] [-results RESULTS] [-test] [-verbose] query
 
-Get comics from a search term.
+Search for and/or download content from getcomics.info
 
 positional arguments:
   query                 Search term for comics
@@ -14,31 +14,27 @@ options:
   -output DOWNLOAD_PATH, --o DOWNLOAD_PATH
                         Destination directory (default: "./")
   -newer NEWER, --n NEWER
-                        Search for issues including newer ones, requires an integer argument (default: False)
+                        Search for issues including newer ones, requires an integer in the search (default: False)
+  -prompt, --p          Confirm download before saving (default: False)
   -results RESULTS, --r RESULTS
-                        Number of results to retrieve, requires an integer argument (default: 1, 0 for infinite)
+                        Number of results to retrieve (default: 1, 0 for infinite)
   -test, --t            Enable test mode (default: False)
   -verbose, --v         Verbosity level (default: False)
 ```
 
-Examples:
+# Examples:
+### Download all 'Stalking Dead Deluxe' comics to be found
 ```
-# Download all 'Stalking Dead Deluxe' comics to be found
 python main.py "Stalking Dead Deluxe"
 ```
 
+### Download issues 73 and newer of 'Stalking Dead Deluxe', to a maximum of 10 results
 ```
-# Download issues 73 and newer of 'Stalking Dead Deluxe'
-python main.py "Stalking Dead Deluxe" -newer 73
-```
-
-```
-# Download a maximum of 10 'Stalking Dead Deluxe' search results
-python main.py "Stalking Dead Deluxe" -results 10
+python main.py "Stalking Dead Deluxe" -newer 73 -results 10
 ```
 
+### Do a test run at a maximum of 3 search results for 'Stalking Dead Deluxe' - essentially runs the search without downloading
 ```
-# Do a test run at a maximum of 3 search results for 'Stalking Dead Deluxe' - essentially runs the search without downloading
 python main.py "Stalking Dead Deluxe" -results 3 -test                                                              
 
 Page links found:
@@ -52,6 +48,11 @@ Comic links found:
 3) The Stalking Dead Deluxe #75 (2023): https://fs2.comicfiles.ru/2023.10.25/Update%202/The%20Stalking%20Dead%20Deluxe%20075%20%282023%29%20%28Digital%29%20%28%20Li%27l-Empire%29.cbr
 ```
 
+### Prompt before downloading a file, and save to the desktop
+```
+python main.py "Stalking Dead Deluxe 75" -output ~\Desktop -prompt                                                                                ─╯
+Download 'The Stalking Dead Deluxe #75 (2023)'? (Y/n)
+```
 Notes:
 
 * Where a 'native' download cannot be found, but a Mediarefire download is available, the Mediafire link will be shown, the URL prepended by '_MEDIAFIRE_' (will require a manual download)
