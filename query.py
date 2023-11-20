@@ -1,6 +1,7 @@
-import math
 import re
+import shutil
 import tempfile
+import textwrap
 
 from pathlib import Path
 from urllib.parse import quote_plus, unquote
@@ -126,7 +127,7 @@ class Query:
 		total_size_in_bytes = int(response.headers.get('content-length', 0))
 		with open(temp_file, "wb") as file:
 			progress = Progress(
-				TextColumn(destination.name),
+				TextColumn("[progress.description]{task.description}"),
 				TimeRemainingColumn(compact=True),
 				BarColumn(bar_width=20),
 				"[progress.percentage]{task.percentage:>3.1f}%",
@@ -144,8 +145,15 @@ class Query:
 					visible=not self.verbose
 				)
 				for chunk in response.iter_content(chunk_size=chunk_size):
+					# set up the progress bar so it has the best chance to be displayed nicely, allowing for terminal resizing
+					columns_width = 60 # generally, the Text/TimeRemaining/Bar/Download/TransferSpeed Columns take up this much room
+					terminal_width = shutil.get_terminal_size().columns
+					max_length = max(terminal_width - columns_width, 10)
+					file_name_divided = "\n".join(textwrap.wrap(destination.name, width=max_length))
+
 					file.write(chunk)
-					progress.advance(task_id, advance=chunk_size)
+					progress.update(task_id, description=file_name_divided, advance=chunk_size)
+					# progress.advance(task_id, advance=chunk_size)
 		temp_file.replace(destination)
 
 	def safe_filename(self, filename: str) -> str:
