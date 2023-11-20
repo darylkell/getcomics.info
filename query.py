@@ -94,7 +94,7 @@ class Query:
 		"""        
 		for i, (url, title) in enumerate(self.comic_links.items()):
 			if url.startswith("_MEDIAFIRE_"):
-				print(f"Please download from the following Mediafire link:\n{url[url.index('http'):]}")
+				print(f"{title}:\nPlease download from the following Mediafire link:\n{url[url.index('http'):]}")
 				continue
 			
 			if self.verbose: print(f"Downloading {title} from {url}")

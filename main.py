@@ -43,7 +43,7 @@ def parse_arguments():
 
 	args = parser.parse_args()
 
-	args.download_path = Path(args.download_path)
+	args.download_path = Path(args.download_path).expanduser()
 	if not args.download_path.exists() or not args.download_path.is_dir():
 		print(f"Please enter a valid output directory.")
 		print(f"'{args.download_path}' does not exist or is not a valid directory.")
@@ -69,7 +69,7 @@ def main():
 			query.get_download_links()
 
 			if args.test:
-				print(f"\n{'-'*40}\nQuery: {args.query} {args.newer + i}")
+				print(f"\n{'-'*40}\nQuery: {args.query} {args.newer + i if args.newer else ''}")
 				print("Page links found:")
 				if len(query.page_links) == 0: print(0)
 				for index, (url, title) in enumerate(query.page_links.items(), start=1):
@@ -78,7 +78,7 @@ def main():
 				print("Comic links found:")
 				if len(query.page_links) == 0: print(0)
 				for index, (url, title) in enumerate(query.comic_links.items(), start=1):
-					print(f"{index}) {title}: {url}")
+					print(f"{index}) {title}:\n{url}")
 			else:
 				query.download_comics()
 
@@ -90,6 +90,8 @@ def main():
 						break
 				else:
 					failed_to_find_comics = 0
+			else:
+				break
 	except KeyboardInterrupt:
 		sys.exit(1)
 
