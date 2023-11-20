@@ -27,7 +27,7 @@ options:
 ```
 python main.py "Stalking Dead Deluxe"
 
-The Stalking Dead Deluxe 076 (2023) (Digital) (Li_l-Empire).cbr 00:02 ━━━━━━━━━━━━━━╸━━━━━ 73.5% • 18.9/25.8 MiB • 5.4 MB/s
+The Stalking Dead Deluxe 076 (2023).cbr 00:02 ━━━━━━━━━━━━━━╸━━━━━ 73.5% • 18.9/25.8 MiB • 5.4 MB/s
 ```
 
 ### Download issues 73 and newer of 'Stalking Dead Deluxe', to a maximum of 10 results
