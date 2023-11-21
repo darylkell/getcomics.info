@@ -232,14 +232,14 @@ def main():
 			with console.status(f"Querying {len(query.page_links):,} search results for download links...") as status:
 				query.get_download_links()
 
-			if args.test and query.page_links:
+			if (args.test or args.verbose) and query.page_links:
 				console.print(Markdown(f"## {query_string}"))
 				for page_index, (page_url, page_title) in enumerate(query.page_links.items(), start=1):
 					print(f"\n{page_index}) {page_title}\nPage: {page_url}\nComic links on page:")
 					for comic_url, comic_title in query.comic_links.items():
 						if comic_title == page_title:
 							print(f"  • {comic_url}")
-			elif not query.page_links:
+			if not query.page_links:
 				print(f"No results found for query '{query_string}'")
 			else:
 				query.download_comics(args.prompt)

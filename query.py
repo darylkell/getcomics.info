@@ -83,21 +83,23 @@ class Query:
 				print(e)
 
 			soup = BeautifulSoup(response.text, "html.parser")
-			native_download_a_tag = soup.find("a", {"title": "Download Now"})
+			native_download_a_tags = soup.findAll("a", {"title": "Download Now"})
 			main_server_a_tags = soup.findAll("a", text="Main Server")
-			mediafire_download_a_tag = soup.find("a", {"title": "MEDIAFIRE"})
+			mediafire_download_a_tags = soup.findAll("a", {"title": "MEDIAFIRE"})
 
-			if not native_download_a_tag and not main_server_a_tags:
+			if not native_download_a_tags and not main_server_a_tags:
 				if self.verbose: print(f"Couldn't find a native download link on page {url}")
-				if mediafire_download_a_tag:
+				if mediafire_download_a_tags:
 					# prepend URL so we know it is MEDIAFIRE
-					self.comic_links[f"_MEDIAFIRE_{mediafire_download_a_tag['href']}"] = title
-			elif native_download_a_tag:
-				self.comic_links[native_download_a_tag["href"]] = title
-			elif main_server_a_tags:
+					for tag in mediafire_download_a_tags:
+						self.comic_links[f"_MEDIAFIRE_{tag['href']}"] = title
+			if native_download_a_tags:
+				for tag in native_download_a_tags:
+					self.comic_links[tag["href"]] = title
+			if main_server_a_tags:
 				for tag in main_server_a_tags:
 					self.comic_links[tag["href"]] = title
-			else:
+			if not native_download_a_tags and not main_server_a_tags and not mediafire_download_a_tags:
 				print("No download links found.")
 
 	def download_comics(self, prompt=False):
