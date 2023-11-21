@@ -45,23 +45,21 @@ class Query:
 				print(e)
 			
 			soup = BeautifulSoup(response.text, "html.parser")
-			posts = soup.findAll("h1", {"class": "post-title"})
-			if len(posts) == 0:
+			articles = soup.findAll("article")
+			if len(articles) == 0:
 				return
 
-			for post in posts:
-				tags = post.findAll("a")
-				for tag in tags:
-					# don't get any more if we've passed our desired number
-					if self.num_results_desired != 0 and len(self.page_links) == self.num_results_desired:
-						continue
-					
-					if date:
-						tag_date = post.find("time").get("datetime") # should be in the format "2023-10-08" for Oct 8 2023
-						year, month, day = tag_date.split("-")
-						if not date > datetime(year=int(year), month=int(month), day=int(day) - 1):
-							continue
-					self.page_links[tag["href"]] = tag.text
+			for article in articles:
+				title_tag = article.find("h1", {"class": "post-title"})
+				title = title_tag.text
+				link = title_tag.find("a")["href"]
+				article_time = article.find("time")["datetime"]
+				
+				if date:
+					year, month, day = article_time.split("-")  # should be in the format "2023-10-08" for Oct 8 2023
+					if datetime(year=int(year), month=int(month), day=int(day)) < date:
+						return  # don't bother looking at more articles because the articles are sorted by date
+				self.page_links[link] = title
 
 		if self.verbose:
 			print(f"{len(self.page_links):,} pages found containing matching comics.")
@@ -99,6 +97,8 @@ class Query:
 			elif main_server_a_tags:
 				for tag in main_server_a_tags:
 					self.comic_links[tag["href"]] = title
+			else:
+				print("No download links found.")
 
 	def download_comics(self, prompt=False):
 		"""

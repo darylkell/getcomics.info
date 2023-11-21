@@ -63,10 +63,8 @@ def parse_arguments():
 		sys.exit(1)
 
 	if args.date:
-		print(args.date)
 		args.date = is_date(args.date, return_datetime=True)
 		if args.verbose:
-			print(args.date)
 			print(f"Searching for comics released on/since {args.date.strftime('%d-%B-%Y')}")
 	
 	return args
@@ -222,30 +220,34 @@ def main():
 		while True: # loop used to continue searching for issues until one cannot be found, if args.newer set
 			if args.newer:
 				i += 1
-				query = Query(f"{args.query} {args.newer + i}", args.results, args.verbose, args.download_path)
+				query_string = f"{args.query} {args.newer + i}"
+				query = Query(query_string, args.results, args.verbose, args.download_path)
 			else:
-				query = Query(args.query, args.results, args.verbose, args.download_path)
+				query_string = args.query
+				query = Query(query_string, args.results, args.verbose, args.download_path)
 			
 			with console.status("Querying getcomics.info for search results...") as status:
 				query.find_pages(date=args.date)
 			with console.status(f"Querying {len(query.page_links):,} search results for download links...") as status:
 				query.get_download_links()
 
-			if args.test:
-				console.print(Markdown(f"## {args.query} {args.newer + i if args.newer else ''}"))
+			if args.test and query.page_links:
+				console.print(Markdown(f"## {query_string}"))
 				for page_index, (page_url, page_title) in enumerate(query.page_links.items(), start=1):
 					print(f"\n{page_index}) {page_title}\nPage: {page_url}\nComic links on page:")
-					for comic_index, (comic_url, comic_title) in enumerate(query.comic_links.items(), start=1):
+					for comic_url, comic_title in query.comic_links.items():
 						if comic_title == page_title:
 							print(f"  • {comic_url}")
+			elif not query.page_links:
+				print(f"No results found for query '{query_string}'")
 			else:
 				query.download_comics(args.prompt)
 
 			if args.newer:
-				# break if it is 3 times in a row that we've failed to find comics
+				# break if it is 3 or -results times in a row that we've failed to find comics
 				if not query.comic_links:
 					failed_to_find_comics += 1
-					if failed_to_find_comics == 3:
+					if failed_to_find_comics == max(3, args.results):
 						break
 				else:
 					failed_to_find_comics = 0
