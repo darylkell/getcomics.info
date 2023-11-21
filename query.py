@@ -206,21 +206,3 @@ class Query:
 		while Path(f"{directories}{stem} ({num}){suffix}").exists():
 			num += 1
 		return f"{directories}{stem} ({num}){suffix}"
-
-	def format_bytes(self, size: [int, float]) -> str:
-		"""
-		:param size: (int) bytes to determine a readable size from
-		:return: (string) readable size
-		"""
-		orig_size = size
-		# 2**10 = 1024
-		power = 2**10
-		n = 0
-		power_labels = {0 : ' B', 1: ' KB', 2: ' MB', 3: ' GB', 4: ' TB', 5: ' PB', 6: ' EB', 7: ' ZB', 8: ' YB'}
-		while size > power:
-			size /= power
-			n += 1
-		try:
-			return f"{round(size, 2)}{power_labels[n]}"
-		except KeyError:
-			raise TypeError(f"Input {orig_size:,} is too large (yottabyte is largest calculable)")
