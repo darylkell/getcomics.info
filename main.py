@@ -36,7 +36,7 @@ def parse_arguments():
 	
 	# Optional argument for the number of results
 	parser.add_argument('-results', '--r', dest="results", type=int, default=0, # treat 0 as infinite
-		help='Number of results to retrieve (default: 1, 0 for infinite)'
+		help='Number of results to retrieve (default: 0, for infinite)'
 	)
 
 	# Optional argument for testing
@@ -60,8 +60,6 @@ def parse_arguments():
 	return args
 
 
-
-
 def main():
 	args = parse_arguments()
 	console = Console()
@@ -76,8 +74,10 @@ def main():
 			else:
 				query = Query(args.query, args.results, args.verbose, args.download_path)
 			
-			query.find_pages()
-			query.get_download_links()
+			with console.status("Querying getcomics.info for search results...") as status:
+				query.find_pages()
+			with console.status(f"Querying {len(query.page_links):,} search results for download links...") as status:
+				query.get_download_links()
 
 			if args.test:
 				console.print(Markdown(f"## {args.query} {args.newer + i if args.newer else ''}"))
