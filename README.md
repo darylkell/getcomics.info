@@ -2,7 +2,9 @@
 Sequentially download files from getcomics.info, should play nicely on Linux and Windows.
 
 ```
-usage: main.py [-h] [-output DOWNLOAD_PATH] [-newer NEWER] [-prompt] [-results RESULTS] [-test] [-verbose] query
+usage: main.py [-h] [-date DATE] [-output DOWNLOAD_PATH] [-newer NEWER] [-prompt] [-results RESULTS] [-test]
+               [-verbose]
+               query
 
 Search for and/or download content from getcomics.info
 
@@ -11,6 +13,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  -date DATE, --d DATE  Return results as new as this date (inclusive), eg: 2023-11-21 (optional)
   -output DOWNLOAD_PATH, --o DOWNLOAD_PATH
                         Destination directory (default: "./")
   -newer NEWER, --n NEWER
@@ -65,11 +68,12 @@ Comic links on page:
 python main.py "Stalking Dead Deluxe 75" -output ~\Desktop -prompt                                                                                ─╯
 Download 'The Stalking Dead Deluxe #75 (2023)'? (Y/n)
 ```
-Notes:
+### Notes:
 
-* Where a 'native' download cannot be found, but a Mediarefire download is available, the Mediafire link will be shown, the URL prepended by '_MEDIAFIRE_' (will require a manual download)
+* Where a 'native' download cannot be found, but a Mediafire download is available, the Mediafire link will be shown, the URL prepended by '_MEDIAFIRE_' (will require a manual download)
 * Script relies on a 'Download Now' button or 'Main Server' button(s) to find a download link.
 * As the query is made via a Python object, query.Query could be imported to a bespoke script and searches could be written out to file etc.
+* Can combo with a text file containing series' you want to download, and in the case of PowerShell use something like: `cat ~\Documents\comics.txt | foreach { python main.py $_ -date 2023-11-18 -output ~\Desktop\temp}`, incrementing your date each time to the last date you ran the script so you pick up any new uploads.
 <br>
 Requirements:
 
