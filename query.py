@@ -3,6 +3,7 @@ import shutil
 import tempfile
 import textwrap
 
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote_plus, unquote
 
@@ -25,9 +26,11 @@ class Query:
 		self.page_links = {}  # pages hosting comics, dict[str, str]: url, title
 		self.comic_links = {} # actual links to comics, dict[str, str]: url, title
 
-	def find_pages(self):
+	def find_pages(self, date=None):
 		"""
 		Uses the search query to find pages that can later be parsed for download links.
+
+		date (None | datetime): date to look for in search results, or newer
 		"""
 		# treat 0 as infinite desired results
 		page = 0
@@ -52,7 +55,14 @@ class Query:
 					# don't get any more if we've passed our desired number
 					if self.num_results_desired != 0 and len(self.page_links) == self.num_results_desired:
 						continue
+					
+					if date:
+						tag_date = post.find("time").get("datetime") # should be in the format "2023-10-08" for Oct 8 2023
+						year, month, day = tag_date.split("-")
+						if not date > datetime(year=int(year), month=int(month), day=int(day) - 1):
+							continue
 					self.page_links[tag["href"]] = tag.text
+
 		if self.verbose:
 			print(f"{len(self.page_links):,} pages found containing matching comics.")
 
