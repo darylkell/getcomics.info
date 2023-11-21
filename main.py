@@ -14,44 +14,44 @@ def parse_arguments():
 	Parse arguments, but exit early if an output directory doesn't resolve properly.
 	"""
 
-	parser = argparse.ArgumentParser(description='Search for and/or download content from getcomics.info')
+	parser = argparse.ArgumentParser(description="Search for and/or download content from getcomics.info")
 	
 	# Mandatory argument
-	parser.add_argument('query', type=str, help='Search term for comics')
+	parser.add_argument("query", type=str, help="Search term for comics")
 
 	# Optional argument for date
-	parser.add_argument('-date', '--d', dest='date', type=str, default=None,
-		help='Return results as new as this date (inclusive), eg: 2023-11-21'
+	parser.add_argument("-date", "--d", dest='date', type=str, default=None,
+		help="Return results as new as this date (inclusive), eg: 2023-11-21 (optional)"
 	)
 
 	# Optional argument for download location
-	parser.add_argument('-output', '--o', dest='download_path', type=str, default='./',
+	parser.add_argument("-output", "--o", dest="download_path", type=str, default="./",
 		help='Destination directory (default: "./")'
 	)
 
 	# Optional argument for newer issues
-	parser.add_argument('-newer', '--n', dest="newer", type=int, default=False,
-		help='Search for issues including newer ones, requires an integer in the search (default: False)'
+	parser.add_argument("-newer", "--n", dest="newer", type=int, default=False,
+		help="Search for issues including newer ones, requires an integer in the search (default: False)"
 	)
 
 	# Optional argument for prompting before saving
-	parser.add_argument('-prompt', '--p', dest="prompt", action='store_true', default=False,
-		help='Confirm download before saving (default: False)'
+	parser.add_argument("-prompt", "--p", dest="prompt", action="store_true", default=False,
+		help="Confirm download before saving (default: False)"
 	)
 	
 	# Optional argument for the number of results
-	parser.add_argument('-results', '--r', dest="results", type=int, default=0, # treat 0 as infinite
-		help='Number of results to retrieve (default: 0, for infinite)'
+	parser.add_argument("-results", "--r", dest="results", type=int, default=0, # treat 0 as infinite
+		help="Number of results to retrieve (default: 0, for infinite)"
 	)
 
 	# Optional argument for testing
-	parser.add_argument('-test', '--t', dest="test", action='store_true', default=False,
-		help='Enable test mode (default: False)'
+	parser.add_argument("-test", "--t", dest="test", action="store_true", default=False,
+		help="Enable test mode (default: False)"
 	)
 
 	# Optional argument for verbosity
-	parser.add_argument('-verbose', '--v', dest="verbose", action='store_true', default=False,
-		help='Verbosity level (default: False)'
+	parser.add_argument("-verbose", "--v", dest="verbose", action="store_true", default=False,
+		help="Verbosity level (default: False)"
 	)
 
 	args = parser.parse_args()
@@ -74,7 +74,7 @@ def is_date(date, return_datetime=False) -> [bool, datetime]:
 	"""
 	date (str) - date to check if valid
 	return_datetime (bool or str) - if True, returns True/False if date is valid
-		if str is passed, returns datetime object of the date in the requested string format (ie "%d-%m-%Y" etc)
+		if str is passed, returns datetime/strftime of the date in the requested string format (ie "%d-%m-%Y" etc)
 	the function returns (boolean or datetime object) depending on return_datetime argument
 	"""
 	if not isinstance(return_datetime, str):
@@ -209,6 +209,7 @@ def is_date(date, return_datetime=False) -> [bool, datetime]:
 		return True
 	except Exception as err:
 		return False
+
 
 def main():
 	args = parse_arguments()
