@@ -2,7 +2,9 @@
 Sequentially download files from getcomics.info, should play nicely on Linux and Windows.
 
 ```
-usage: main.py [-h] [-output DOWNLOAD_PATH] [-newer NEWER] [-prompt] [-results RESULTS] [-test] [-verbose] query
+usage: main.py [-h] [-date DATE] [-output DOWNLOAD_PATH] [-newer NEWER] [-prompt] [-results RESULTS] [-test]
+               [-verbose]
+               query
 
 Search for and/or download content from getcomics.info
 
@@ -11,6 +13,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  -date DATE, --d DATE  Return results as new as this date (inclusive), eg: 2023-11-21 (optional)
   -output DOWNLOAD_PATH, --o DOWNLOAD_PATH
                         Destination directory (default: "./")
   -newer NEWER, --n NEWER
