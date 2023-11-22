@@ -2,11 +2,12 @@
 Sequentially download files from getcomics.info, should play nicely on Linux and Windows.
 
 ```
-usage: main.py [-h] [-date DATE] [-output DOWNLOAD_PATH] [-newer NEWER] [-prompt] [-results RESULTS] [-test]
+usage: main.py [-h] [-date DATE] [-output DOWNLOAD_PATH] [-min MIN] [-max MAX] [-prompt] [-results RESULTS] [-test]
                [-verbose]
                query
 
-Search for and/or download content from getcomics.info
+Search for and/or download content from getcomics.info. Note: If -min or -max is set, an integer will be included as
+part of the performed search query.
 
 positional arguments:
   query                 Search term for comics
@@ -16,8 +17,8 @@ options:
   -date DATE, --d DATE  Return results as new as this date (inclusive), eg: 2023-11-21 (optional)
   -output DOWNLOAD_PATH, --o DOWNLOAD_PATH
                         Destination directory (default: "./")
-  -newer NEWER, --n NEWER
-                        Search for issues including newer ones, requires an integer in the search (default: False)
+  -min MIN              Search for issues including newer ones from issue number X (default: None)
+  -max MAX              Search for issues up to issue number X (default: None)
   -prompt, --p          Confirm download before saving (default: False)
   -results RESULTS, --r RESULTS
                         Number of results to retrieve (default: 0, for infinite)
@@ -35,7 +36,17 @@ The Stalking Dead Deluxe 076 (2023).cbr 00:02 ━━━━━━━━━━━�
 
 ### Download issues 73 and newer of 'Stalking Dead Deluxe', to a maximum of 10 results
 ```
-python main.py "Stalking Dead Deluxe" -newer 73 -results 10
+python main.py "Stalking Dead Deluxe" -min 73 -results 10
+```
+
+### Download issues up to issue #73 of 'Stalking Dead Deluxe'
+```
+python main.py "Stalking Dead Deluxe" -max 73
+```
+
+### Download issues #70 to #73 and newer of 'Stalking Dead Deluxe'
+```
+python main.py "Stalking Dead Deluxe" -min 70 -max 73
 ```
 
 ### Do a test run at a maximum of 3 search results for 'huffy 4' - essentially runs the search without downloading
