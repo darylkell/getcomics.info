@@ -14,7 +14,10 @@ def parse_arguments():
 	Parse arguments, but exit early if an output directory doesn't resolve properly.
 	"""
 
-	parser = argparse.ArgumentParser(description="Search for and/or download content from getcomics.info")
+	parser = argparse.ArgumentParser(
+		description="Search for and/or download content from getcomics.info.\n\n" \
+			"Note: If -min or -max is set, an integer will be included as part of the performed search query."
+		)
 	
 	# Mandatory argument
 	parser.add_argument("query", type=str, help="Search term for comics")
@@ -30,8 +33,13 @@ def parse_arguments():
 	)
 
 	# Optional argument for newer issues
-	parser.add_argument("-newer", "--n", dest="newer", type=int, default=False,
-		help="Search for issues including newer ones, requires an integer in the search (default: False)"
+	parser.add_argument("-min", dest="min", type=int, default=None,
+		help="Search for issues including newer ones from issue number X (default: None)"
+	)
+
+	# Optional argument for newer issues
+	parser.add_argument("-max", dest="max", type=int, default=None,
+		help="Search for issues up to issue number X (default: None)"
 	)
 
 	# Optional argument for prompting before saving
@@ -67,6 +75,13 @@ def parse_arguments():
 		if args.verbose:
 			print(f"Searching for comics released on/since {args.date.strftime('%d-%B-%Y')}")
 	
+	if args.min and args.max:
+		if args.max < args.min:
+			print("You must specify -max argument as a number greater than -min argument.")
+			sys.exit(1)
+	if args.max and not args.min:
+		args.min = 0  # give the search a place to start
+
 	return args
 
 
@@ -211,22 +226,28 @@ def is_date(date, return_datetime=False) -> [bool, datetime]:
 		return False
 
 
+def get_query_string(i, query, _min=None, _max=None):
+	if _min or _max:
+		return f"{query} {_min + i}"
+	return query
+
+
 def main():
 	args = parse_arguments()
-	console = Console()
+	console = Console(highlight=False)
 
 	try:
 		i = -1
 		failed_to_find_comics = 0
 		while True: # loop used to continue searching for issues until one cannot be found, if args.newer set
-			if args.newer:
-				i += 1
-				query_string = f"{args.query} {args.newer + i}"
-				query = Query(query_string, args.results, args.verbose, args.download_path)
-			else:
-				query_string = args.query
-				query = Query(query_string, args.results, args.verbose, args.download_path)
+			i += 1
+			if args.max and (args.min + i) > args.max:
+				break
+
+			query_string = get_query_string(i, args.query, _min=args.min, _max=args.max)
+			query = Query(query_string, args.results, args.verbose, args.download_path)
 			
+			print()
 			with console.status("Querying getcomics.info for search results...") as status:
 				query.find_pages(date=args.date)
 			with console.status(f"Querying {len(query.page_links):,} search results for download links...") as status:
@@ -235,20 +256,21 @@ def main():
 			if (args.test or args.verbose) and query.page_links:
 				console.print(Markdown(f"## {query_string}"))
 				for page_index, (page_url, page_title) in enumerate(query.page_links.items(), start=1):
-					print(f"\n{page_index}) {page_title}\nPage: {page_url}\nComic links on page:")
+					console.print(f"\n{page_index}) [bold]{page_title}[/bold]\nPage: {page_url}\nComic links on page:")
 					for comic_url, comic_title in query.comic_links.items():
 						if comic_title == page_title:
 							print(f"  • {comic_url}")
+			
 			if not query.page_links:
 				print(f"No results found for query '{query_string}'")
-			else:
+			elif not args.test:
 				query.download_comics(args.prompt)
 
-			if args.newer:
-				# break if it is 3 or -results times in a row that we've failed to find comics
-				if not query.comic_links:
+			if args.min or args.max:
+				# break if it is (3 or -results) times in a row that we've failed to find comics
+				if not query.page_links:
 					failed_to_find_comics += 1
-					if failed_to_find_comics == max(3, args.results):
+					if failed_to_find_comics == max(args.results, 3):
 						break
 				else:
 					failed_to_find_comics = 0
