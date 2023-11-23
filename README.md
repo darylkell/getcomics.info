@@ -44,7 +44,7 @@ python main.py "Stalking Dead Deluxe" -min 73 -results 10
 python main.py "Stalking Dead Deluxe" -max 73
 ```
 
-### Download issues #70 to #73 and newer of 'Stalking Dead Deluxe'
+### Download issues #70 to #73 of 'Stalking Dead Deluxe'
 ```
 python main.py "Stalking Dead Deluxe" -min 70 -max 73
 ```
