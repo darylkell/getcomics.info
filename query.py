@@ -70,7 +70,7 @@ class Query:
 		If a page does not have a native link but has mediafire, it will record that link instead,
 		prepending the url with '_MEDIAFIRE_'
 		
-		TODO: Does not yet handle a page that has multiple links, such as:
+		*TODO*: Does not yet handle a page that has multiple links, such as:
 			https://getcomics.org/other-comics/buffy-the-vampire-slayer-season-8-library-edition-vol-1-4-2012-2013/
 		
 		"""
@@ -84,6 +84,7 @@ class Query:
 
 			soup = BeautifulSoup(response.text, "html.parser")
 			native_download_a_tags = soup.findAll("a", {"title": "Download Now"})
+			native_download_a_tags += soup.findAll("a", {"title": "DOWNLOAD NOW"})
 			main_server_a_tags = soup.findAll("a", text="Main Server")
 			mediafire_download_a_tags = soup.findAll("a", {"title": "MEDIAFIRE"})
 
@@ -135,10 +136,14 @@ class Query:
 		
 		Downloads file to OS temp directory, then renames to the final given destination
 		"""
+		response = requests.get(url, stream=True)
+
+		# check if a redirect occurred because it could affect the file name being saved (issue #13)
+		if response.history:
+			filename = Path(unquote(Path(response.url).name))
 		destination = filename
 		temp_file = Path(tempfile.gettempdir()) / filename.name
-
-		response = requests.get(url, stream=True)
+		
 		total_size_in_bytes = int(response.headers.get('content-length', 0))
 		with open(temp_file, "wb") as file:
 			progress = Progress(
