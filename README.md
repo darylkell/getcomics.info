@@ -99,3 +99,6 @@ This script has been tested with the following requirements:
 * As the query is made via a Python object, query.Query could be imported to a bespoke script and searches could be written out to file etc.
 * Can combo with a text file containing series' you want to download, and in the case of PowerShell use something like: `cat ~\Documents\comics.txt | foreach { python main.py $_ -date 2023-11-18 -output ~\Downloads}`, incrementing your date each time to the last date you ran the script so you pick up any new uploads.
 
+### Security Warning
+------
+Please properly vet anything you download from the internet, including this script. It could do anything.
