@@ -70,7 +70,7 @@ class Query:
 		If a page does not have a native link but has mediafire, it will record that link instead,
 		prepending the url with '_MEDIAFIRE_'
 		
-		TODO: Does not yet handle a page that has multiple links, such as:
+		*TODO*: Does not yet handle a page that has multiple links, such as:
 			https://getcomics.org/other-comics/buffy-the-vampire-slayer-season-8-library-edition-vol-1-4-2012-2013/
 		
 		"""
