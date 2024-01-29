@@ -114,7 +114,7 @@ class Query:
 			
 			if self.verbose: print(f"Downloading {title} from {url}")
 			file_name = self.safe_filename(unquote(url.rpartition("/")[-1]))
-			file_name = self.create_file_name(str(Path(self.download_path / file_name)))
+			file_name = self.create_file_name(str(self.download_path / file_name))
 			
 			if prompt and "n" in input(f"Download '{title}'? (Y/n) ").lower():
 				continue
