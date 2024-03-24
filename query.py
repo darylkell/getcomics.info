@@ -18,7 +18,7 @@ class Query:
 	"""
 	Object to take a user's search string and provide an interface to getcomics.info results 
 	"""
-	def __init__(self, query: str, results: str, verbose: bool, download_path: str):
+	def __init__(self, query: str, results: str, verbose: bool, download_path: Path):
 		self.query = query
 		self.num_results_desired = results
 		self.verbose = verbose
@@ -113,8 +113,13 @@ class Query:
 				continue
 			
 			if self.verbose: print(f"Downloading {title} from {url}")
+
+			# if url doesn't look like a direct file link (some are encoded) try and get file name from the redirect
+			if "." not in url.rpartition("/")[-1]:
+				url = requests.head(url, allow_redirects=True).url
+			
 			file_name = self.safe_filename(unquote(url.rpartition("/")[-1]))
-			file_name = self.create_file_name(str(Path(self.download_path / file_name)))
+			file_name = self.create_file_name(str(self.download_path / file_name))
 			
 			if prompt and "n" in input(f"Download '{title}'? (Y/n) ").lower():
 				continue
