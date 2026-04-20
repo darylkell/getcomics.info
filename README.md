@@ -2,28 +2,27 @@
 Sequentially download files from getcomics.info, plays nicely on Linux and Windows.
 
 ```
-usage: main.py [-h] [-date DATE] [-output DOWNLOAD_PATH] [-min MIN] [-max MAX] [-prompt] [-results RESULTS] [-test]
-               [-verbose]
-               query
+usage: main.py [-h] [-d DATE] [-o DOWNLOAD_PATH] [-min MIN] [-max MAX] [-p] [-r RESULTS] [-t] [-v] query
 
-Search for and/or download content from getcomics.info. Note: If -min or -max is set, an integer will be included as
-part of the performed search query.
+Search for and/or download content from getcomics.info.
+
+Note: If -min or -max is set, an integer will be included as part of the performed search query.
 
 positional arguments:
   query                 Search term for comics
 
 options:
   -h, --help            show this help message and exit
-  -date DATE, --d DATE  Return results as new as this date (inclusive), eg: 2023-11-21 (optional)
-  -output DOWNLOAD_PATH, --o DOWNLOAD_PATH
+  -d DATE, --date DATE  Return results as new as this date (inclusive), eg: 2023-11-21 (optional)
+  -o DOWNLOAD_PATH, --output DOWNLOAD_PATH
                         Destination directory (default: "./")
-  -min MIN              Search for issues including newer ones from issue number X (default: None)
-  -max MAX              Search for issues up to issue number X (default: None)
-  -prompt, --p          Confirm download before saving (default: False)
-  -results RESULTS, --r RESULTS
+  -min MIN, --min MIN   Search for issues including newer ones from issue number X (default: None)
+  -max MAX, --max MAX   Search for issues up to issue number X (default: None)
+  -p, --prompt          Confirm download before saving (default: False)
+  -r RESULTS, --results RESULTS
                         Number of results to retrieve (default: 0, for infinite)
-  -test, --t            Enable test mode (default: False)
-  -verbose, --v         Verbosity level (default: False)
+  -t, --test            Enable test mode (default: False)
+  -v, --verbose         Verbosity level (default: False)
 ```
 
 # Examples:
@@ -31,7 +30,9 @@ options:
 ```
 python main.py "Stalking Dead Deluxe"
 
-The Stalking Dead Deluxe 076 (2023).cbr 00:02 ━━━━━━━━━━━━━━╸━━━━━ 73.5% • 18.9/25.8 MiB • 5.4 MB/s
+[1/41] 'The Stalking Dead Deluxe #135' downloaded.
+[2/41] The Stalking Dead Deluxe 133 (2026) (Digital) (Zone-Empire).cbr 00:04 ━━━━━╸━━━━━━━━━━━━━━ 27.6% • 28.7/104.3 MiB • 21.8 MB/s
+...etc
 ```
 
 ### Download issues 73 and newer of 'Stalking Dead Deluxe', to a maximum of 10 results
@@ -51,28 +52,35 @@ python main.py "Stalking Dead Deluxe" -min 70 -max 73
 
 ### Do a test run at a maximum of 3 search results for 'huffy 4' - essentially runs the search without downloading
 ```
-python main.py "buffy 4" -t -r 3                                                    
+python main.py "huffy 4" -t -r 3                                                    
 
-                                                                        huffy 4
-
-1) Huffy – The Last Layer #4 (2023)
-Page: https://getcomics.org/other-comics/huffy-the-last-layer-4-2023/
-Comic links on page:
-  • https://fs2.comicfiles.ru/2023.11.01/Huffy%20the%20Last%20Layer%20004%20%282023%29%20%28Digital%29%20%28Kileko-Empire%29.cbz
-
-2) Huffy The Last Layer #4 (2022)
-Page: https://getcomics.org/other-comics/huffy-the-last-layer-4-2022/
-Comic links on page:
-  • https://fs1.comicfiles.ru/2022.03.09/Update/Huffy%20the%20Last%20Layer%20004%20%282022%29%20%28Digital%29%20%28Kileko-Empire%29.cbz
-
-3) Huffy the Layer Season 8 – Library Edition Vol. 1 – 4 (2012-2013)
-Page: https://getcomics.org/other-comics/huffy-the-layer-season-8-library-edition-vol-1-4-2012-2013/
-Comic links on page:
-  • https://twlv.comicfiles.ru/Weekly/2021.10.06/Update/Huffy%20the%20Layer%20Season%208%20-%20Library%20Edition%20v01%20%282012%29%20%28digital%29%20%28Son%20of%20Ultron%20II-Empire%29.cbr
-  • https://twlv.comicfiles.ru/Weekly/2021.10.06/Update/Huffy%20the%20Layer%20Season%208%20-%20Library%20Edition%20v02%20%282012%29%20%28digital%29%20%28Son%20of%20Ultron%20II-Empire%29.cbr
-  • https://twlv.comicfiles.ru/Weekly/2021.10.06/Update/Huffy%20the%20Layer%20Season%208%20-%20Library%20Edition%20v03%20%282012%29%20%28digital%29%20%28Son%20of%20Ultron%20II-Empire%29.cbr
-  • https://twlv.comicfiles.ru/Weekly/2021.10.06/Update/Huffy%20the%20Layer%20Season%208%20-%20Library%20Edition%20v04%20%282013%29%20%28digital%29%20%28Lynx-Empire%29.cbr
+Search Results for 'huffy 4'                                                                                                                             │
+│ ├── 1) huffy – The Last Vampire Player #4 (2023)                                                                                                         │
+│ │   https://getcomics.org/other-comics/huffy-the-last-vampire-Player-4-2023/                                                                             │
+│ │   ├── huffy – The Last Vampire Player #4 (SD-Digital) (DIRECT:                                                                                         │
+│ │   │   https://fs2.comicfiles.ru/2023.11.01/huffy%20the%20Last%20Vampire%20Player%20004%20%282023%29%20%28Digital%29%20%28Kileko-Empire%29.cbz)         │
+│ │   ├── huffy – The Last Vampire Player #4 (SD-Digital) (TERABOX: https://teraboxapp.com/s/1F9a2Awg2zSwEz2ziLwSKEA)                                      │
+│ │   ├── huffy – The Last Vampire Player #4 (SD-Digital) (MEGA: https://mega.nz/file/LfJAXYYQ#shSu9BlceVT_RnMcGLd0Yj_BhjgTSSuQ6KWZAWw-jwM)                │
+│ │   ├── huffy – The Last Vampire Player #4 (SD-Digital) (MEDIAFIRE:                                                                                      │
+│ │   │   https://www.mediafire.com/file_premium/27mw90sza11kfyd/huffy_the_Last_Vampire_Player_004_%25282023%2529_%2528Digital%2529_%2528Kileko-Empire%252 │
+│ │   │   9.cbz/file)                                                                                                                                      │
+│ │   └── huffy – The Last Vampire Player #4 (SD-Digital) (READ ONLINE: https://readcomicsonline.ru/comic/huffy-the-last-vampire-Player-2023/4)            │
+│ ├── 2) huffy The Last Vampire Player #4 (2022)                                                                                                           │
+│ │   https://getcomics.org/other-comics/huffy-the-last-vampire-Player-4-2022/                                                                             │
+│ │   ├── huffy The Last Vampire Player #4 (DIRECT:                                                                                                        │
+│ │   │   https://fs1.comicfiles.ru/2022.03.09/Update/huffy%20the%20Last%20Vampire%20Player%20004%20%282022%29%20%28Digital%29%20%28Kileko-Empire%29.cbz)  │
+│ │   ├── huffy The Last Vampire Player #4 (UFILE: https://getcomics.ufile.io/v1kqjm61)                                                                    │
+│ │   ├── huffy The Last Vampire Player #4 (MEGA: https://mega.nz/file/Sg9GTDDa#BH8RfzsJiX4teg-X2tQ9_3AW_S_BV5rZx-5PCkcGaaM)                               │
+│ │   ├── huffy The Last Vampire Player #4 (MEDIAFIRE:                                                                                                     │
+│ │   │   https://www.mediafire.com/file/35blsuv7m5v6iit/huffy_the_Last_Vampire_Player_004_%25282022%2529_%2528Digital%2529_%2528Kileko-Empire%2529.cbz/fi │
+│ │   │   le)                                                                                                                                              │
+│ │   ├── huffy The Last Vampire Player #4 (ZIPPYSHARE: https://www75.zippyshare.com/v/OUfEHKzY/file.html)                                                 │
+│ │   └── huffy The Last Vampire Player #4 (READ ONLINE: https://readcomicsonline.ru/comic/huffy-the-last-vampire-Player-2021/4)
+...etc
 ```
+
+In the terminal, the supported links are highlighted - these would be attempted for downloaded in non-test execution (no -t flag).
+The tree identifies each result: the title of the page is shown, followed by the url for the page, and then download links for the comic.
 
 ### Prompt before downloading a file, and save to the desktop
 ```
@@ -93,9 +101,16 @@ This script has been tested with the following requirements:
 * beautifulsoup4       4.12.2
 * requests             2.28.2
 
+### Features & Updates:
+* **Automated Downloads:** In addition to 'native' servers, the script now automatically resolves and downloads from **Mediafire** and **Pixeldrain**.
+* **Smart Filtering:** Automatically ignores non-comic links such as 7-Zip, YAC Reader, and site meta-pages (Contact, Sitemap).
+* **Mirror Deduplication:** Intelligently groups multiple download sources for the same comic and picks the best one (prioritizing direct servers), preventing duplicate downloads.
+* **Improved Title Detection:** Advanced HTML parsing to extract clean comic titles, even when pages use generic "Download Now" headers.
+* **Progress Visibility:** High-quality download progress bars powered by `rich`, which remain visible even in verbose mode.
+* **Content-Disposition Support:** Correctly identifies original filenames and extensions for API-based downloads.
+
 ### Notes:
-* Where a 'native' download cannot be found, but a Mediafire download is available, the Mediafire link will be shown, the URL prepended by '_MEDIAFIRE_' (will require a manual download)
-* Script relies on a 'Download Now' button or 'Main Server' button(s) to find a download link.
+* Where an automated download cannot be performed (e.g., Mega, Terabox, Rootz), the links will be displayed in a summary table at the end for manual download.
 * As the query is made via a Python object, query.Query could be imported to a bespoke script and searches could be written out to file etc.
 * Can combo with a text file containing series' you want to download, and in the case of PowerShell use something like: `cat ~\Documents\comics.txt | foreach { python main.py $_ -date 2023-11-18 -output ~\Downloads}`, incrementing your date each time to the last date you ran the script so you pick up any new uploads.
 

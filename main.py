@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -264,9 +265,20 @@ def main():
 				for page_index, (page_url, page_title) in enumerate(query.page_links.items(), start=1):
 					page_node = tree.add(f"[bold]{page_index}) {page_title}[/bold]\n[dim]{page_url}[/dim]")
 					links_found = False
-					for comic_url, comic_title in query.comic_links.items():
-						if comic_title == page_title:
-							page_node.add(f"[green]{comic_url}[/green]")
+					for comic_url, metadata in query.comic_links.items():
+						# Associate links with the page they originated from
+						if metadata.get("origin_url") == page_url:
+							provider = metadata.get("provider", "UNKNOWN")
+							link_type = metadata.get("type", "DIRECT")
+							item_title = metadata.get("title", page_title)
+							
+							# If the item title is different from page title, show it (for collection pages)
+							display_text = f"{provider}: {comic_url}"
+							if item_title != page_title:
+								display_text = f"[bold white]{item_title}[/bold white] ({display_text})"
+								
+							color = "green" if link_type != "MANUAL" else "yellow"
+							page_node.add(f"[{color}]{display_text}[/{color}]")
 							links_found = True
 					if not links_found:
 						page_node.add("[red]No download links found.[/red]")
@@ -279,7 +291,7 @@ def main():
 				query.download_comics(args.prompt)
 				overall_summary.successful_downloads.extend(query.successful_downloads)
 				overall_summary.skipped_downloads.extend(query.skipped_downloads)
-				overall_summary.mediafire_links.extend(query.mediafire_links)
+				overall_summary.unsupported_mirrors.extend(query.unsupported_mirrors)
 
 			if args.min or args.max:
 				# break if it is (3 or -results) times in a row that we've failed to find comics
@@ -297,7 +309,7 @@ def main():
 
 	except KeyboardInterrupt:
 		console.print("\n[yellow]Operation cancelled by user.[/yellow]")
-		sys.exit(1)
+		os._exit(1)
 
 
 if __name__ == "__main__":
