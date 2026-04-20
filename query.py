@@ -3,6 +3,7 @@ import shutil
 import tempfile
 import textwrap
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote_plus, unquote
@@ -11,10 +12,12 @@ import requests
 from bs4 import BeautifulSoup
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 from rich.progress import Progress, BarColumn, DownloadColumn, TextColumn, TimeRemainingColumn, TransferSpeedColumn
 
 
 BASE_URL = "https://getcomics.info"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 console = Console(highlight=False)
 
 class Query:
@@ -31,6 +34,9 @@ class Query:
 		self.successful_downloads = []
 		self.skipped_downloads = []
 		self.mediafire_links = []
+		
+		self.session = requests.Session()
+		self.session.headers.update({"User-Agent": USER_AGENT})
 
 	def find_pages(self, date=None):
 		"""
@@ -45,7 +51,7 @@ class Query:
 			url = f"{BASE_URL}/page/{page}?s={quote_plus(self.query)}"
 			try:
 				if self.verbose: console.print(f"Opening page {url}")
-				response = requests.get(url)
+				response = self.session.get(url)
 			except Exception as e:
 				console.print(f"Error contacting URL: {url}")
 				console.print(e)
@@ -70,44 +76,43 @@ class Query:
 		if self.verbose:
 			console.print(f"{len(self.page_links):,} pages found containing matching comics.")
 
+	def _fetch_links_from_page(self, url, title):
+		"""Helper for parallel link fetching"""
+		try:
+			if self.verbose: console.print(f"Opening page {url}")
+			response = self.session.get(url)
+		except Exception as e:
+			console.print(f"Error contacting URL: {url}")
+			console.print(e)
+			return
+
+		soup = BeautifulSoup(response.text, "html.parser")
+		native_download_a_tags = soup.findAll("a", {"title": "Download Now"})
+		native_download_a_tags += soup.findAll("a", {"title": "DOWNLOAD NOW"})
+		main_server_a_tags = soup.findAll("a", text="Main Server")
+		mediafire_download_a_tags = soup.findAll("a", {"title": "MEDIAFIRE"})
+
+		if not native_download_a_tags and not main_server_a_tags:
+			if self.verbose: console.print(f"Couldn't find a native download link on page {url}")
+			if mediafire_download_a_tags:
+				# prepend URL so we know it is MEDIAFIRE
+				for tag in mediafire_download_a_tags:
+					self.comic_links[f"_MEDIAFIRE_{tag['href']}"] = title
+		if native_download_a_tags:
+			for tag in native_download_a_tags:
+				self.comic_links[tag["href"]] = title
+		if main_server_a_tags:
+			for tag in main_server_a_tags:
+				self.comic_links[tag["href"]] = title
+		if not native_download_a_tags and not main_server_a_tags and not mediafire_download_a_tags:
+			if self.verbose: console.print(f"No download links found on {url}")
+
 	def get_download_links(self):
 		"""
-		From the page results, gets download links.
-		If a page does not have a native link but has mediafire, it will record that link instead,
-		prepending the url with '_MEDIAFIRE_'
-		
-		*TODO*: Does not yet handle a page that has multiple links, such as:
-			https://getcomics.org/other-comics/buffy-the-vampire-slayer-season-8-library-edition-vol-1-4-2012-2013/
-		
+		From the page results, gets download links in parallel.
 		"""
-		for url, title in self.page_links.items():
-			try:
-				if self.verbose: console.print(f"Opening page {url}")
-				response = requests.get(url)
-			except Exception as e:
-				console.print(f"Error contacting URL: {url}")
-				console.print(e)
-
-			soup = BeautifulSoup(response.text, "html.parser")
-			native_download_a_tags = soup.findAll("a", {"title": "Download Now"})
-			native_download_a_tags += soup.findAll("a", {"title": "DOWNLOAD NOW"})
-			main_server_a_tags = soup.findAll("a", text="Main Server")
-			mediafire_download_a_tags = soup.findAll("a", {"title": "MEDIAFIRE"})
-
-			if not native_download_a_tags and not main_server_a_tags:
-				if self.verbose: console.print(f"Couldn't find a native download link on page {url}")
-				if mediafire_download_a_tags:
-					# prepend URL so we know it is MEDIAFIRE
-					for tag in mediafire_download_a_tags:
-						self.comic_links[f"_MEDIAFIRE_{tag['href']}"] = title
-			if native_download_a_tags:
-				for tag in native_download_a_tags:
-					self.comic_links[tag["href"]] = title
-			if main_server_a_tags:
-				for tag in main_server_a_tags:
-					self.comic_links[tag["href"]] = title
-			if not native_download_a_tags and not main_server_a_tags and not mediafire_download_a_tags:
-				if self.verbose: console.print("No download links found.")
+		with ThreadPoolExecutor(max_workers=5) as executor:
+			executor.map(lambda p: self._fetch_links_from_page(*p), self.page_links.items())
 
 	def download_comics(self, prompt=False):
 		"""
@@ -124,7 +129,7 @@ class Query:
 
 			# if url doesn't look like a direct file link (some are encoded) try and get file name from the redirect
 			if "." not in url.rpartition("/")[-1]:
-				url = requests.head(url, allow_redirects=True).url
+				url = self.session.head(url, allow_redirects=True).url
 			
 			file_name = self.safe_filename(unquote(url.rpartition("/")[-1]))
 			file_name = self.create_file_name(str(self.download_path / file_name))
@@ -153,7 +158,7 @@ class Query:
 		
 		Downloads file to OS temp directory, then renames to the final given destination
 		"""
-		response = requests.get(url, stream=True)
+		response = self.session.get(url, stream=True)
 
 		# check if a redirect occurred because it could affect the file name being saved (issue #13)
 		if response.history:
@@ -237,15 +242,29 @@ class Query:
 		return f"{directories}{stem} ({num}){suffix}"
 
 	def print_summary(self):
-		summary = []
+		if not any([self.successful_downloads, self.skipped_downloads, self.mediafire_links]):
+			return
+
+		summary_elements = []
 		if self.successful_downloads:
-			summary.append(f"[green]Successfully downloaded {len(self.successful_downloads)} comics.[/green]")
+			summary_elements.append(f"[green]Successfully downloaded {len(self.successful_downloads)} comics.[/green]")
 		if self.skipped_downloads:
-			summary.append(f"[yellow]Skipped {len(self.skipped_downloads)} comics.[/yellow]")
-		if self.mediafire_links:
-			summary.append("\n[bold]Manual Downloads Required (Mediafire):[/bold]")
-			for title, link in self.mediafire_links:
-				summary.append(f"  • {title}: {link}")
+			summary_elements.append(f"[yellow]Skipped {len(self.skipped_downloads)} comics.[/yellow]")
 		
-		if summary:
-			console.print(Panel("\n".join(summary), title="Summary", expand=False))
+		# Combine status counts
+		status_text = "\n".join(summary_elements)
+		
+		if self.mediafire_links:
+			table = Table(title="Manual Downloads Required (Mediafire)", show_header=True, header_style="bold magenta", expand=True)
+			table.add_column("Comic Title", style="dim")
+			table.add_column("URL", style="blue")
+			for title, link in self.mediafire_links:
+				table.add_row(title, link)
+			
+			console.print()
+			if status_text:
+				console.print(Panel(status_text, title="Download Status", expand=False))
+			console.print(table)
+		else:
+			if status_text:
+				console.print(Panel(status_text, title="Summary", expand=False))
