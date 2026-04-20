@@ -5,8 +5,12 @@ from pathlib import Path
 
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.tree import Tree
 
 from query import Query
+
+console = Console(highlight=False)
 
 
 def parse_arguments():
@@ -23,61 +27,62 @@ def parse_arguments():
 	parser.add_argument("query", type=str, help="Search term for comics")
 
 	# Optional argument for date
-	parser.add_argument("-date", "--d", dest='date', type=str, default=None,
+	parser.add_argument("-d", "--date", dest='date', type=str, default=None,
 		help="Return results as new as this date (inclusive), eg: 2023-11-21 (optional)"
 	)
 
 	# Optional argument for download location
-	parser.add_argument("-output", "--o", dest="download_path", type=str, default="./",
+	parser.add_argument("-o", "--output", dest="download_path", type=str, default="./",
 		help='Destination directory (default: "./")'
 	)
 
 	# Optional argument for newer issues
-	parser.add_argument("-min", dest="min", type=int, default=None,
+	parser.add_argument("-min", "--min", dest="min", type=int, default=None,
 		help="Search for issues including newer ones from issue number X (default: None)"
 	)
 
 	# Optional argument for newer issues
-	parser.add_argument("-max", dest="max", type=int, default=None,
+	parser.add_argument("-max", "--max", dest="max", type=int, default=None,
 		help="Search for issues up to issue number X (default: None)"
 	)
 
 	# Optional argument for prompting before saving
-	parser.add_argument("-prompt", "--p", dest="prompt", action="store_true", default=False,
+	parser.add_argument("-p", "--prompt", dest="prompt", action="store_true", default=False,
 		help="Confirm download before saving (default: False)"
 	)
 	
 	# Optional argument for the number of results
-	parser.add_argument("-results", "--r", dest="results", type=int, default=0, # treat 0 as infinite
+	parser.add_argument("-r", "--results", dest="results", type=int, default=0, # treat 0 as infinite
 		help="Number of results to retrieve (default: 0, for infinite)"
 	)
 
 	# Optional argument for testing
-	parser.add_argument("-test", "--t", dest="test", action="store_true", default=False,
+	parser.add_argument("-t", "--test", dest="test", action="store_true", default=False,
 		help="Enable test mode (default: False)"
 	)
 
 	# Optional argument for verbosity
-	parser.add_argument("-verbose", "--v", dest="verbose", action="store_true", default=False,
+	parser.add_argument("-v", "--verbose", dest="verbose", action="store_true", default=False,
 		help="Verbosity level (default: False)"
 	)
 
 	args = parser.parse_args()
 
 	args.download_path = Path(args.download_path).expanduser()
-	if not args.download_path.exists() or not args.download_path.is_dir():
-		print(f"Please enter a valid output directory.")
-		print(f"'{args.download_path}' does not exist or is not a valid directory.")
+	if not args.download_path.exists():
+		args.download_path.mkdir(parents=True, exist_ok=True)
+	elif not args.download_path.is_dir():
+		console.print(f"[red]Error: '{args.download_path}' is not a valid directory.[/red]")
 		sys.exit(1)
 
 	if args.date:
 		args.date = is_date(args.date, return_datetime=True)
 		if args.verbose:
-			print(f"Searching for comics released on/since {args.date.strftime('%d-%B-%Y')}")
+			console.print(f"Searching for comics released on/since {args.date.strftime('%d-%B-%Y')}")
 	
 	if args.min and args.max:
 		if args.max < args.min:
-			print("You must specify -max argument as a number greater than -min argument.")
+			console.print("[red]You must specify -max argument as a number greater than -min argument.[/red]")
 			sys.exit(1)
 	if args.max and not args.min:
 		args.min = 0  # give the search a place to start
@@ -234,11 +239,12 @@ def get_query_string(i, query, _min=None, _max=None):
 
 def main():
 	args = parse_arguments()
-	console = Console(highlight=False)
 
 	try:
 		i = -1
 		failed_to_find_comics = 0
+		overall_summary = Query("", 0, False, args.download_path)
+		
 		while True: # loop used to continue searching for issues until one cannot be found, if args.newer set
 			i += 1
 			if args.max and (args.min + i) > args.max:
@@ -247,24 +253,33 @@ def main():
 			query_string = get_query_string(i, args.query, _min=args.min, _max=args.max)
 			query = Query(query_string, args.results, args.verbose, args.download_path)
 			
-			print()
-			with console.status("Querying getcomics.info for search results...") as status:
+			console.print()
+			with console.status(f"Querying getcomics.info for search results for '{query_string}'...") as status:
 				query.find_pages(date=args.date)
 			with console.status(f"Querying {len(query.page_links):,} search results for download links...") as status:
 				query.get_download_links()
 
 			if (args.test or args.verbose) and query.page_links:
-				console.print(Markdown(f"## {query_string}"))
+				tree = Tree(f"[bold blue]Search Results for '{query_string}'[/bold blue]")
 				for page_index, (page_url, page_title) in enumerate(query.page_links.items(), start=1):
-					console.print(f"\n{page_index}) [bold]{page_title}[/bold]\nPage: {page_url}\nComic links on page:")
+					page_node = tree.add(f"[bold]{page_index}) {page_title}[/bold]\n[dim]{page_url}[/dim]")
+					links_found = False
 					for comic_url, comic_title in query.comic_links.items():
 						if comic_title == page_title:
-							print(f"  • {comic_url}")
+							page_node.add(f"[green]{comic_url}[/green]")
+							links_found = True
+					if not links_found:
+						page_node.add("[red]No download links found.[/red]")
+				
+				console.print(Panel(tree, expand=False))
 			
 			if not query.page_links:
-				print(f"No results found for query '{query_string}'")
+				console.print(f"[yellow]No results found for query '{query_string}'[/yellow]")
 			elif not args.test:
 				query.download_comics(args.prompt)
+				overall_summary.successful_downloads.extend(query.successful_downloads)
+				overall_summary.skipped_downloads.extend(query.skipped_downloads)
+				overall_summary.mediafire_links.extend(query.mediafire_links)
 
 			if args.min or args.max:
 				# break if it is (3 or -results) times in a row that we've failed to find comics
@@ -276,13 +291,14 @@ def main():
 					failed_to_find_comics = 0
 			else:
 				break
+				
+		if not args.test:
+			overall_summary.print_summary()
+
 	except KeyboardInterrupt:
+		console.print("\n[yellow]Operation cancelled by user.[/yellow]")
 		sys.exit(1)
 
 
 if __name__ == "__main__":
 	main()
-
-
-
-

@@ -9,10 +9,13 @@ from urllib.parse import quote_plus, unquote
 
 import requests
 from bs4 import BeautifulSoup
+from rich.console import Console
+from rich.panel import Panel
 from rich.progress import Progress, BarColumn, DownloadColumn, TextColumn, TimeRemainingColumn, TransferSpeedColumn
 
 
 BASE_URL = "https://getcomics.info"
+console = Console(highlight=False)
 
 class Query:
 	"""
@@ -25,6 +28,9 @@ class Query:
 		self.download_path = download_path
 		self.page_links = {}  # pages hosting comics, dict[str, str]: url, title
 		self.comic_links = {} # actual links to comics, dict[str, str]: url, title
+		self.successful_downloads = []
+		self.skipped_downloads = []
+		self.mediafire_links = []
 
 	def find_pages(self, date=None):
 		"""
@@ -38,11 +44,11 @@ class Query:
 			page += 1
 			url = f"{BASE_URL}/page/{page}?s={quote_plus(self.query)}"
 			try:
-				if self.verbose: print(f"Opening page {url}")
+				if self.verbose: console.print(f"Opening page {url}")
 				response = requests.get(url)
 			except Exception as e:
-				print(f"Error contacting URL: {url}")
-				print(e)
+				console.print(f"Error contacting URL: {url}")
+				console.print(e)
 			
 			soup = BeautifulSoup(response.text, "html.parser")
 			articles = soup.findAll("article")
@@ -62,7 +68,7 @@ class Query:
 				self.page_links[link] = title
 
 		if self.verbose:
-			print(f"{len(self.page_links):,} pages found containing matching comics.")
+			console.print(f"{len(self.page_links):,} pages found containing matching comics.")
 
 	def get_download_links(self):
 		"""
@@ -76,11 +82,11 @@ class Query:
 		"""
 		for url, title in self.page_links.items():
 			try:
-				if self.verbose: print(f"Opening page {url}")
+				if self.verbose: console.print(f"Opening page {url}")
 				response = requests.get(url)
 			except Exception as e:
-				print(f"Error contacting URL: {url}")
-				print(e)
+				console.print(f"Error contacting URL: {url}")
+				console.print(e)
 
 			soup = BeautifulSoup(response.text, "html.parser")
 			native_download_a_tags = soup.findAll("a", {"title": "Download Now"})
@@ -89,7 +95,7 @@ class Query:
 			mediafire_download_a_tags = soup.findAll("a", {"title": "MEDIAFIRE"})
 
 			if not native_download_a_tags and not main_server_a_tags:
-				if self.verbose: print(f"Couldn't find a native download link on page {url}")
+				if self.verbose: console.print(f"Couldn't find a native download link on page {url}")
 				if mediafire_download_a_tags:
 					# prepend URL so we know it is MEDIAFIRE
 					for tag in mediafire_download_a_tags:
@@ -101,18 +107,20 @@ class Query:
 				for tag in main_server_a_tags:
 					self.comic_links[tag["href"]] = title
 			if not native_download_a_tags and not main_server_a_tags and not mediafire_download_a_tags:
-				print("No download links found.")
+				if self.verbose: console.print("No download links found.")
 
 	def download_comics(self, prompt=False):
 		"""
 		Downloads comics that have been found 
 		"""        
+		total = len(self.comic_links)
 		for i, (url, title) in enumerate(self.comic_links.items()):
+			prefix = f"[{i+1}/{total}]"
 			if url.startswith("_MEDIAFIRE_"):
-				print(f"{title}:\nPlease download from the following Mediafire link:\n{url[url.index('http'):]}")
+				self.mediafire_links.append((title, url[url.index('http'):]))
 				continue
 			
-			if self.verbose: print(f"Downloading {title} from {url}")
+			if self.verbose: console.print(f"{prefix} Downloading {title} from {url}")
 
 			# if url doesn't look like a direct file link (some are encoded) try and get file name from the redirect
 			if "." not in url.rpartition("/")[-1]:
@@ -121,23 +129,27 @@ class Query:
 			file_name = self.safe_filename(unquote(url.rpartition("/")[-1]))
 			file_name = self.create_file_name(str(self.download_path / file_name))
 			
-			if prompt and "n" in input(f"Download '{title}'? (Y/n) ").lower():
+			if prompt and "n" in input(f"{prefix} Download '{title}'? (Y/n) ").lower():
+				self.skipped_downloads.append(title)
 				continue
 
 			self.download_file(
 				url, 
 				filename=Path(file_name),
 				verbose=True, 
-				transient=True
+				transient=True,
+				prefix=prefix
 			)
-			print(f"'{title}' downloaded.")
+			self.successful_downloads.append(title)
+			console.print(f"{prefix} [green]'{title}' downloaded.[/green]")
 
-	def download_file(self, url, filename=None, chunk_size=1024, verbose=False, transient=False):
+	def download_file(self, url, filename=None, chunk_size=1024, verbose=False, transient=False, prefix=""):
 		"""
 		url (str): url to download
 		filename (Path): path to save as
 		verbose (bool): whether or not to display the progress bar
 		transient: make the progress bar disappear on completion
+		prefix (str): string to prepend to the progress bar description
 		
 		Downloads file to OS temp directory, then renames to the final given destination
 		"""
@@ -150,35 +162,40 @@ class Query:
 		temp_file = Path(tempfile.gettempdir()) / filename.name
 		
 		total_size_in_bytes = int(response.headers.get('content-length', 0))
-		with open(temp_file, "wb") as file:
-			progress = Progress(
-				TextColumn("[progress.description]{task.description}"),
-				TimeRemainingColumn(compact=True),
-				BarColumn(bar_width=20),
-				"[progress.percentage]{task.percentage:>3.1f}%",
-				"•",
-				DownloadColumn(binary_units=True),
-				"•",
-				TransferSpeedColumn(),
-				disable=not verbose,
-				transient=transient
-			)
-			with progress:
-				task_id = progress.add_task(
-					description=destination.name,
-					total=total_size_in_bytes,
-					visible=not self.verbose
+		try:
+			with open(temp_file, "wb") as file:
+				progress = Progress(
+					TextColumn("[progress.description]{task.description}"),
+					TimeRemainingColumn(compact=True),
+					BarColumn(bar_width=20),
+					"[progress.percentage]{task.percentage:>3.1f}%",
+					"•",
+					DownloadColumn(binary_units=True),
+					"•",
+					TransferSpeedColumn(),
+					disable=not verbose,
+					transient=transient
 				)
-				for chunk in response.iter_content(chunk_size=chunk_size):
-					# set up the progress bar so it has the best chance to be displayed nicely, allowing for terminal resizing
-					columns_width = 60 # generally, the Text/TimeRemaining/Bar/Download/TransferSpeed Columns take up this much room
-					terminal_width = shutil.get_terminal_size().columns
-					max_length = max(terminal_width - columns_width, 10)
-					file_name_divided = "\n".join(textwrap.wrap(destination.name, width=max_length))
+				with progress:
+					task_id = progress.add_task(
+						description=f"{prefix} {destination.name}",
+						total=total_size_in_bytes,
+						visible=not self.verbose
+					)
+					for chunk in response.iter_content(chunk_size=chunk_size):
+						# set up the progress bar so it has the best chance to be displayed nicely, allowing for terminal resizing
+						columns_width = 70
+						terminal_width = shutil.get_terminal_size().columns
+						max_length = max(terminal_width - columns_width, 10)
+						file_name_divided = "\n".join(textwrap.wrap(f"{prefix} {destination.name}", width=max_length))
 
-					file.write(chunk)
-					progress.update(task_id, description=file_name_divided, advance=chunk_size)
-		temp_file.replace(destination)
+						file.write(chunk)
+						progress.update(task_id, description=file_name_divided, advance=chunk_size)
+			temp_file.replace(destination)
+		except KeyboardInterrupt:
+			if temp_file.exists():
+				temp_file.unlink(missing_ok=True)
+			raise
 
 	def safe_filename(self, filename: str) -> str:
 		"""Returns the filename with characters like \:*?"<>| removed."""
@@ -218,3 +235,17 @@ class Query:
 		while Path(f"{directories}{stem} ({num}){suffix}").exists():
 			num += 1
 		return f"{directories}{stem} ({num}){suffix}"
+
+	def print_summary(self):
+		summary = []
+		if self.successful_downloads:
+			summary.append(f"[green]Successfully downloaded {len(self.successful_downloads)} comics.[/green]")
+		if self.skipped_downloads:
+			summary.append(f"[yellow]Skipped {len(self.skipped_downloads)} comics.[/yellow]")
+		if self.mediafire_links:
+			summary.append("\n[bold]Manual Downloads Required (Mediafire):[/bold]")
+			for title, link in self.mediafire_links:
+				summary.append(f"  • {title}: {link}")
+		
+		if summary:
+			console.print(Panel("\n".join(summary), title="Summary", expand=False))
